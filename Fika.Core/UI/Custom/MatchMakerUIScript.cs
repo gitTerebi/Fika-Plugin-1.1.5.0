@@ -340,6 +340,10 @@ namespace Fika.Core.UI.Custom
             }
 
             backButton.gameObject.SetActive(false);
+
+            // auto click start dedi
+            fikaMatchMakerUi.StartButton.onClick.Invoke();
+
         }
 
         private void ToggleLoading(bool enabled)
