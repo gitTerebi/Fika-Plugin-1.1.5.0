@@ -968,6 +968,7 @@ namespace Fika.Core.Coop.GameMode
                     };
                     fikaClient.SendData(ref packet, DeliveryMethod.ReliableOrdered);
                 });
+                
                 Traverse.Create(backButtonComponent).Field("OnClick").SetValue(newEvent);
 
                 return customButton;
@@ -1411,51 +1412,69 @@ namespace Fika.Core.Coop.GameMode
 
             SetMatchmakerStatus(LocaleUtils.UI_WAIT_FOR_HOST_START_RAID.Localized());
 
-            GameObject startButton = null;
+            // auto ready 
             if (isServer)
             {
-                startButton = CreateStartButton() ?? throw new NullReferenceException("Start button could not be created!");
-                FikaServer server = Singleton<FikaServer>.Instance;
-                server.RaidInitialized = true;
-
-                while (!RaidStarted)
-                {
-                    await Task.Yield();
-                }
-
-                if (startButton != null)
-                {
-                    Destroy(startButton);
-                }
-
-                InformationPacket continuePacket = new()
-                {
-                    AmountOfPeers = server.NetServer.ConnectedPeersCount + 1
-                };
-                server.SendDataToAll(ref continuePacket, DeliveryMethod.ReliableOrdered);
-                SetStatusModel status = new(FikaBackendUtils.GroupId, LobbyEntry.ELobbyStatus.IN_GAME);
-                await FikaRequestHandler.UpdateSetStatus(status);
+                RaidStarted = true;
+                FikaBackendUtils.HostExpectedNumberOfPlayers = Singleton<FikaServer>.Instance.NetServer.ConnectedPeersCount + 1;
                 return;
             }
 
-            if (FikaBackendUtils.IsDedicatedRequester)
+            FikaClient fikaClient = Singleton<FikaClient>.Instance ?? throw new NullReferenceException("CreateStartButton::FikaClient was null!");
+            InformationPacket packet = new()
             {
-                startButton = CreateStartButton() ?? throw new NullReferenceException("Start button could not be created!");
-            }
-            FikaClient client = Singleton<FikaClient>.Instance;
-            InformationPacket packet = new();
-            client.SendData(ref packet, DeliveryMethod.ReliableUnordered);
-            do
-            {
-                client.SendData(ref packet, DeliveryMethod.ReliableUnordered);
-                await Task.Delay(250);
-            }
-            while (!RaidStarted);
+                RequestStart = true
+            };
+            fikaClient.SendData(ref packet, DeliveryMethod.ReliableOrdered);
 
-            if (startButton != null)
-            {
-                Destroy(startButton);
-            }
+            return;       
+
+
+            // GameObject startButton = null;
+            // if (isServer)
+            // {
+            //     startButton = CreateStartButton() ?? throw new NullReferenceException("Start button could not be created!");
+            //     FikaServer server = Singleton<FikaServer>.Instance;
+            //     server.RaidInitialized = true;
+
+            //     while (!RaidStarted)
+            //     {
+            //         await Task.Yield();
+            //     }
+
+            //     if (startButton != null)
+            //     {
+            //         Destroy(startButton);
+            //     }
+
+            //     InformationPacket continuePacket = new()
+            //     {
+            //         AmountOfPeers = server.NetServer.ConnectedPeersCount + 1
+            //     };
+            //     server.SendDataToAll(ref continuePacket, DeliveryMethod.ReliableOrdered);
+            //     SetStatusModel status = new(FikaBackendUtils.GroupId, LobbyEntry.ELobbyStatus.IN_GAME);
+            //     await FikaRequestHandler.UpdateSetStatus(status);
+            //     return;
+            // }
+
+            // if (FikaBackendUtils.IsDedicatedRequester)
+            // {
+            //     startButton = CreateStartButton() ?? throw new NullReferenceException("Start button could not be created!");
+            // }
+            // FikaClient client = Singleton<FikaClient>.Instance;
+            // InformationPacket packet = new();
+            // client.SendData(ref packet, DeliveryMethod.ReliableUnordered);
+            // do
+            // {
+            //     client.SendData(ref packet, DeliveryMethod.ReliableUnordered);
+            //     await Task.Delay(250);
+            // }
+            // while (!RaidStarted);
+
+            // if (startButton != null)
+            // {
+            //     Destroy(startButton);
+            // }
         }
 
         /// <summary>
